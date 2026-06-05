@@ -1,11 +1,34 @@
-from bs4 import BeautifulSoup
 import pandas as pd
+from pathlib import Path
 import unicodedata
-import requests
+
+SCRAPED_DATA_PATH = Path(__file__).resolve().parents[2] / "csv" / "spacex_web_scraped.csv"
+
+DISPLAY_COLUMNS = [
+    'Flight No.',
+    'Date',
+    'Time',
+    'Launch site',
+    'Payload',
+    'Payload mass',
+    'Orbit',
+    'Customer',
+    'Launch outcome',
+    'Version Booster',
+    'Booster landing',
+]
 
 def fetch_falcon_9_launch_data():
+    cached_data = load_cached_launch_data()
+    if not cached_data.empty:
+        return cached_data
+
+    from bs4 import BeautifulSoup
+    import requests
+
     static_url = "https://en.wikipedia.org/w/index.php?title=List_of_Falcon_9_and_Falcon_Heavy_launches&oldid=1027686922"
-    response = requests.get(static_url)
+    response = requests.get(static_url, timeout=15)
+    response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
 
     html_tables = soup.find_all('table', class_='wikitable plainrowheaders collapsible')
@@ -77,6 +100,19 @@ def fetch_falcon_9_launch_data():
         ]]
 
     return df
+
+def load_cached_launch_data():
+    if not SCRAPED_DATA_PATH.exists():
+        return pd.DataFrame()
+
+    df = pd.read_csv(SCRAPED_DATA_PATH)
+    df.columns = [column.strip() for column in df.columns]
+
+    for column in df.select_dtypes(include="object").columns:
+        df[column] = df[column].str.replace("\n", " ", regex=False).str.strip()
+
+    existing_columns = [column for column in DISPLAY_COLUMNS if column in df.columns]
+    return df[existing_columns]
 
 def date_time(table_cells):
     return [data_time.strip() for data_time in list(table_cells.strings)][0:2]

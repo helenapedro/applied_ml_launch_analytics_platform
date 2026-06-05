@@ -89,36 +89,27 @@ layout = dbc.Container(
 def update_table(n_clicks):
     df = fetch_falcon_9_launch_data()
 
+    if df.empty:
+        message = dbc.Alert(
+            "No scraped launch data is available.",
+            color="warning",
+            className="text-center",
+        )
+        return message, None
+
     table = dash_table.DataTable(
         id="launch-table",
         columns=[{"name": col, "id": col} for col in df.columns],
         data=df.to_dict("records"),
-        style_table={'height': '400px', 'overflowY': 'auto'},
-        style_cell={'textAlign': 'center'},
+        page_size=10,
+        style_table={'height': '400px', 'overflowY': 'auto', 'overflowX': 'auto'},
+        style_cell={'textAlign': 'center', 'minWidth': '120px', 'whiteSpace': 'normal'},
+        style_header={'fontWeight': 'bold', 'backgroundColor': '#f1f1f1'},
     )
-    if n_clicks > 0:
+    if n_clicks and n_clicks > 0:
         return table, dcc.send_data_frame(df.to_csv, "falcon9_launches.csv")
 
     return table, None
-
-# Callback to toggle the visibility of the code snippet description
-@callback(
-    Output("webscraping-data-description", "style"),
-    Input("toggle-webscraping-description", "n_clicks"),
-    prevent_initial_call=True
-)
-def toggle_code_snippet_visibility(n_clicks):
-    if n_clicks % 2 == 0:
-        return {"display": "none"}
-    else:
-        return {
-            "display": "block",
-            "backgroundColor": "#f4f4f4",
-            "padding": "10px",
-            "borderRadius": "5px",
-            "whiteSpace": "pre-wrap",
-            "overflowX": "scroll",
-        }
     
 @callback(
      [
