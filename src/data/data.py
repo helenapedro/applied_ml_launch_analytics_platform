@@ -20,7 +20,7 @@ def fetch_data(endpoint, base_url_type='spacex'):
     url = f"{base_url}{endpoint}"
     try:
         logging.info(f"Fetching data from {url}")
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

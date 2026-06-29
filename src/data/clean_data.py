@@ -8,7 +8,7 @@ def fetch_initial_data_from_api(endpoint):
     base_url = 'https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBM-DS0321EN-SkillsNetwork/datasets/'
     url = f"{base_url}{endpoint}"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
         return data
@@ -176,9 +176,3 @@ def create_clean_data(data):
         ],
         className="container",
     )
-
-# Fetch and process data
-launch_data = fetch_and_clean_launch_data()
-
-# Create the exploration page layout
-layout = create_clean_data(launch_data)

@@ -11,7 +11,15 @@ from tabs.core_reuse_tab import cores_reuse_tab
 
 from data.data_fetch import fetch_and_process_data
 
+_api_data_cache = None
+
 def eda_rest_api():
+    global _api_data_cache
+    if _api_data_cache is None:
+        _api_data_cache = fetch_and_process_data()
+
+    rockets_df, launchpads_df, payloads_df, cores_df = _api_data_cache
+
     return dbc.Card(
         [
             dbc.CardHeader(
@@ -65,8 +73,6 @@ def eda_rest_api():
         ],
         className="mb-4 shadow-sm",
     )
-
-rockets_df, launchpads_df, payloads_df, cores_df = fetch_and_process_data()
 
 @callback(
     [Output("api-summary-content", "children"), Output("api-summary-content", "style"), Output("api-snippet-visible", "data")],

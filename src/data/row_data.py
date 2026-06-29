@@ -2,10 +2,9 @@ from dash import html, dash_table, dcc, Output, Input, State, callback
 import dash_bootstrap_components as dbc
 from data.data_fetch import fetch_initial_data
 
-# Fetch and process the data
-dataframe = fetch_initial_data()
-
 def fetch_initial_data_layout():
+    dataframe = fetch_initial_data()
+
     if dataframe.empty:
         return html.Div("No data available to display", style={"textAlign": "center", "padding": "20px"})
 

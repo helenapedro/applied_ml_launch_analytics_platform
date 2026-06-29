@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 from src.sidebar import create_navibar
 from src.pages.about import create_about_content
 from src.pages.webscraping import layout as scraping_layout
-from src.pages.eda import layout as eda_layout 
+from src.pages.eda import create_eda_layout
 from src.pages.folium import layout as folium_layout
 
 app = Dash(
@@ -109,7 +109,7 @@ def toggle_summaries(toggle_processed_n, processed_style):
 )
 def display_page(pathname):
     if pathname == "/":
-        return eda_layout
+        return create_eda_layout()
     elif pathname == "/scraping":
         return scraping_layout
     elif pathname == "/folium":

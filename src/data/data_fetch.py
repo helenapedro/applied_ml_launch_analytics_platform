@@ -1,6 +1,20 @@
 import pandas as pd
 from data.data import fetch_rockets_data,fetch_launchpads_data, fetch_payloads_data, fetch_cores_data, fetch_initial_spacex_data
 
+ROCKETS_COLUMNS = ['name', 'height', 'mass']
+LAUNCHPADS_COLUMNS = ['name', 'longitude', 'latitude', 'booster_name']
+PAYLOADS_COLUMNS = ['name', 'mass_kg', 'orbit']
+CORES_COLUMNS = [
+    'Core Serial Number',
+    'Times Reused',
+    'RTLS Landing Attempts',
+    'Successful RTLS Landings',
+    'ASDS Landing Attempts',
+    'Successful ASDS Landings',
+    'Core Version (Block)',
+    'Current Status',
+]
+
 def fetch_initial_data():
     initial_data = fetch_initial_spacex_data()
     if initial_data:
@@ -17,10 +31,10 @@ def fetch_initial_data():
 
 
 def fetch_and_process_data():
-    rockets_data = fetch_rockets_data()
-    launchpads_data = fetch_launchpads_data()
-    payloads_data = fetch_payloads_data()
-    cores_data = fetch_cores_data()
+    rockets_data = fetch_rockets_data() or []
+    launchpads_data = fetch_launchpads_data() or []
+    payloads_data = fetch_payloads_data() or []
+    cores_data = fetch_cores_data() or []
     initial_data = fetch_initial_data()
 
     # Convert to DataFrames
@@ -38,21 +52,27 @@ def fetch_and_process_data():
         raise ValueError("Input is not a valid DataFrame")
 
     # Create a mapping of rocket IDs to booster names
-    rocket_id_to_booster_name = {rocket['id']: rocket['name'] for rocket in rockets_data}
+    rocket_id_to_booster_name = {
+        rocket.get('id'): rocket.get('name')
+        for rocket in rockets_data
+        if isinstance(rocket, dict)
+    }
 
      # Add booster names to launchpads DataFrame
     launchpad_booster_names = [
-        rocket_id_to_booster_name.get(launchpad['rockets'][0], 'Unknown Booster') if launchpad['rockets'] else 'No Rockets'
+        rocket_id_to_booster_name.get(launchpad.get('rockets', [None])[0], 'Unknown Booster')
+        if launchpad.get('rockets') else 'No Rockets'
         for launchpad in launchpads_data
+        if isinstance(launchpad, dict)
     ]
 
     launchpads_df['booster_name'] = launchpad_booster_names
 
     # Select specific columns for each DataFrame
-    rockets_df = rockets_df[['name', 'height', 'mass']]
-    launchpads_df = launchpads_df[['name', 'longitude', 'latitude', 'booster_name']]
-    payloads_df = payloads_df[['name', 'mass_kg', 'orbit']]
-    cores_df = cores_df[['serial', 'reuse_count', 'rtls_attempts', 'rtls_landings', 'asds_attempts', 'asds_landings', 'block', 'status']]
+    rockets_df = rockets_df.reindex(columns=ROCKETS_COLUMNS)
+    launchpads_df = launchpads_df.reindex(columns=LAUNCHPADS_COLUMNS)
+    payloads_df = payloads_df.reindex(columns=PAYLOADS_COLUMNS)
+    cores_df = cores_df.reindex(columns=['serial', 'reuse_count', 'rtls_attempts', 'rtls_landings', 'asds_attempts', 'asds_landings', 'block', 'status'])
     
      # Rename columns in cores_df for clarity
     cores_df = cores_df.rename(columns = {
@@ -64,7 +84,7 @@ def fetch_and_process_data():
         'asds_landings': 'Successful ASDS Landings',
         'block': 'Core Version (Block)',
         'status': 'Current Status'
-    })
+    }).reindex(columns=CORES_COLUMNS)
 
     return (
         # Convert DataFrames using the function
